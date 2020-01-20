@@ -1,7 +1,7 @@
 # w251-hw3 - Homework 3  
   
 ## Overview
-Thhis repo contains the components of a lightweight IoT application pipeline that collects images of faces detected from a webcam feed on an edge device (the Nvidia Jetson TX2) and transmits them to the cloud to be processed and stored (an IBM CLoud Object Store).   
+Thhis repo contains the components of a lightweight IoT application pipeline that collects images of faces detected from a webcam feed on an edge device (the Nvidia Jetson TX2) and transmits them to the cloud to be processed and stored (an IBM Cloud Object Store).   
   
 ## Implementation Details  
 All components are implemented as containerized applications deployed on the edge device (to capture and forward image) and the cloud (to receive, process and store). MQTT protocol is used for communication and transmitting images across components.  
@@ -31,7 +31,7 @@ Image Processor: `docker build -t hw3_processor -f Dockerfile.processor .`
 ##### Build commands for the TX2  
 Broker: `docker build -t hw3_broker -f Dockerfile.broker .`  
 Forwarder: `docker build -t hw3_forwarder -f Dockerfile.forwarder .`  
-Edge Image Detector: `docker build -t hw3_edge -f Dockerfile.processor .`  
+Face Detector: `docker build -t hw3_edge -f Dockerfile.processor .`  
   
 
 ## MQTT messaging with Mosquitto  
@@ -45,7 +45,7 @@ Few noteworthy points on the MSQTT setup:
 3 scripts included in the repo:  
 - *edge_detect.py*: Runs on the  Face Detector to capture face images and publish them to the `JDS/WEBCAMS/JETSONTX2` topic.  
 - *forward.py*: Runs on the Forwarder , subscribes to messages locally on the `JDS/WEBCAMS/JETSONTX2` topic nad publishes them to the cloud broker under the `JDS/WEBCAMS` topic.  
-- *imageprocess.py*:  Runs on the cloud VSI -> Processor. Saves incoming messages (from `JDS/WEBCAMS`) to the */HW3Images* directory (which in our implementation is mapped to an IBM COS bucket).  
+- *imageprocess.py*:  Runs on the cloud VSI -> Processor. Saves incoming messages (from `JDS/WEBCAMS`) to the `/HW3Images` directory (which in our implementation is mapped to an IBM COS bucket).  
 
 ## Execution Instructions  
 
@@ -62,12 +62,12 @@ Few noteworthy points on the MSQTT setup:
     `docker network create --driver bridge hw03_jds`  
 2. Initiate the local MQTT Broker:  
     `docker run --name hw3_broker --privileged -tid --rm -p 1883:1883 --network hw03_jds hw3_broker`  
-3. Launch the Edge Detecor:  
+3. Launch the Face Detector:  
     `docker run --name hw3_edge -e DISPLAY=$DISPLAY --privileged -v /usr/share/opencv4:/OpenCV -v /tmp:/tmp -v /home/nvidia/Documents/Projects/HW3:/host --rm --env QT_X11_NO_MITSHM=1 -ti --network hw03_jds hw3_edge python /host/edge_detect.py`  
 4. Launch the Forwarder:  
     `docker run --name hw3_forwarder -v /home/nvidia/Documents/Projects/w251-hw3:/host --privileged -ti --rm --network hw03_jds hw3_forwarder python3 /host/forward.py`  
   
-The usb webcam for the TX2 should now start capturing faces and sending it to the cloud where it gets stored in the COS bucket mounted at */HW3Images*.  
+The usb webcam for the TX2 should now start capturing faces and sending it to the cloud where it gets stored in the COS bucket mounted at `/HW3Images`.  
 
 To terminate the pipeline, shut down all docker containers (on the TX2 and in the cloud VSI).  
    
