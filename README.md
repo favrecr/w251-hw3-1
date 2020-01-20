@@ -7,7 +7,7 @@ Thhis repo contains the components of a lightweight IoT application pipeline tha
 All components are implemented as containerized applications deployed on the edge device (to capture and forward image) and the cloud (to receive, process and store). MQTT proticik us ysed for communication and transmitting images across components.  
 
 ### Overall Architecture  
-
+![alt text](HW3-Arch.jpeg)
   
 ### Jetson TX2 
   
