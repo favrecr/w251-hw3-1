@@ -1,0 +1,13 @@
+FROM alpine
+
+RUN apk update && apk --no-cache add mosquitto
+
+EXPOSE 1883
+
+ENV PATH /usr/sbin:$PATH
+
+ENTRYPOINT ["/usr/sbin/mosquitto"]
+
+
+
+
