@@ -49,7 +49,7 @@ while(True):
 
         msg=png.tobytes()  #Prep to send as message
 
-        local_mqttclient.publish(LOCAL_MQTT_TOPIC,msg,1)  #Publish to local broker
+        local_mqttclient.publish(LOCAL_MQTT_TOPIC,msg,0)  #Publish to local broker
         #i=i+1
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break

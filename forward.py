@@ -21,7 +21,7 @@ remote_mqttclient.loop_start()
 
 def on_connect_local(client, userdata, flags, rc):
         print("connected to local broker with rc: " + str(rc))
-        client.subscribe(LOCAL_MQTT_TOPIC)
+        client.subscribe(LOCAL_MQTT_TOPIC,0)
 	
 def on_message(client,userdata, msg):
   try:

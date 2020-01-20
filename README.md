@@ -1,37 +1,50 @@
 # w251-hw3 - Homework 3  
   
 ## Overview
-Thhis repo contains the components of a lightweight IoT application pipeline that collects images of faces detected from a webcam feed on an edge device (the Nvidia Jetson TX2) and transmits them to the cloud to be processed and stored (aIBM CLoud Object Store).   
+Thhis repo contains the components of a lightweight IoT application pipeline that collects images of faces detected from a webcam feed on an edge device (the Nvidia Jetson TX2) and transmits them to the cloud to be processed and stored (an IBM CLoud Object Store).   
   
 ## Implementation Details  
-All components are implemented as containerized applications deployed on the edge device (to capture and forward image) and the cloud (to receive, process and store). MQTT proticik us ysed for communication and transmitting images across components.  
+All components are implemented as containerized applications deployed on the edge device (to capture and forward image) and the cloud (to receive, process and store). MQTT protocol is used for communication and transmitting images across components.  
 
 ### Overall Architecture  
 ![alt text](HW3-Arch.jpeg)
   
-### Jetson TX2 
-  
-
+### Jetson 
+3 component containers:  
+- Local MQTT Broker
+- Face Detector: captures faces from video feed and publishes to local broker (Topic: JDS/WEBCAMS/JETSONTX2)
+- Forwarder: Subscribes to messages from Face Detector and publishes to cloud broker (Topic: JDS/WEBCAMS)
 
 ### IBM CLoud  
+2 component containers running in a VSI:
+- Cloud MQTT Broker
+- Processor: subscribes to messages coming from the Jetson (or any device usig topic JDS/WEBCAMS) 
 
-Mounted an IBM Objectstore bucket to the `/HW3Images` directory  
+Mount an IBM Objectstore bucket (jds-w251-hw3-images in our case) to the `/HW3Images` directory  
 
 ### Docker  
-Build Images for the Cloud:  
+3 distinct docker build files are used (Dockerfile.broker, Dockerfile.forwarder and Dockerfile.processor).   
+#### Build Images for the Cloud:  
 Broker: `docker build -t hw3_broker -f Dockerfile.broker .`  
 Image Processor: `docker build -t hw3_processor -f Dockerfile.processor .`  
-  
-Build Images for the Jetson  
+   
+#### Build Images for the Jetson  
 Broker: `docker build -t hw3_broker -f Dockerfile.broker .`  
 Forwarder: `docker build -t hw3_forwarder -f Dockerfile.forwarder .`  
 Edge Image Detector: `docker build -t hw3_edge -f Dockerfile.processor .`  
   
-## MQTT messgaing with Mosquitto  
-
+## MQTT messaging with Mosquitto  
+Few noteworthy points on the MSQTT setup:  
+- The topic used locally on the JETSON is /JDS/WEBCAMS/JETSONTX2. The topic published to in the cloud is /JDS/WEBCAMS/, the thinking being thaht the forwarder could be working as an "accumulator" of sorts,gathering messages from multiple webcams.  
+- I used a QoS of 0 when publishing from the face capture app locally to the forwarder since the connection is all local to the Jetson and a few missing messages are not relevant given the rate at which pictures are being captured from the camera.  
+- I used a QoS of 1 (forwarder publishes, cloud processor subscribes) to send the encoded messages to the cloud. Transmission in this case is likely less reliable than just within the Jetson. Since this use case does not care about duplicate images being stored, I did not use QoS of 2 (which would have guaranteed one and only one message).  
   
 
 ### Python Scripts  
+3 scripts included in the repo:  
+- edge_detect.py: Runs on the  Face Detector to capture face images and publish them to the JDS/WEBCAMS/JETSONTX2 topic.  
+- forward.py: Runs on the Forwarder , subscribes to messages locally on the JDS/WEBCAMS/JETSONTX2 topic nad publishes them to the cloud broker under the JDS/WEBCAMS topic.  
+- imageprocess.py:  Runs on the cloud VSI -> Processor. Saves incoming messages (from JDS/WEBCAMS) to the /HW3Images directory (which in our implementation is mapped to an IBM COS bucket).  
 
 ## Execution Instructions  
 
