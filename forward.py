@@ -1,61 +1,40 @@
-import numpy as np
-import cv2
 import paho.mqtt.client as mqtt
 
-#Setup MQTT Information
 LOCAL_MQTT_HOST="hw3_broker"
 LOCAL_MQTT_PORT=1883
 LOCAL_MQTT_TOPIC="JDS/WEBCAMS/JETSONTX2"
 
+REMOTE_MQTT_TOPIC="JDS/WEBCAMS"
+REMOTE_MQTT_PORT=1883
+REMOTE_MQTT_HOST="130.198.99.9"
 
 
-#Instantiate MQTT Client and connect to Broker
+
+def on_connect_remote(client, userdata, flags, rc):
+        print("connected to remote broker with rc: " + str(rc))
+
+remote_mqttclient = mqtt.Client()
+remote_mqttclient.on_connect = on_connect_remote   
+remote_mqttclient.connect(REMOTE_MQTT_HOST, REMOTE_MQTT_PORT, 360)               
+remote_mqttclient.loop_start()
+
 
 def on_connect_local(client, userdata, flags, rc):
-    print("connected to local broker with rc: " + str(rc))
+        print("connected to local broker with rc: " + str(rc))
+        client.subscribe(LOCAL_MQTT_TOPIC)
+	
+def on_message(client,userdata, msg):
+  try:
+    print("message received!")	
+    msgcontent = msg.payload
+    remote_mqttclient.publish(REMOTE_MQTT_TOPIC, msgcontent, 1)
+  except:
+    print("Unexpected error:", sys.exc_info()[0])
 
-local_mqttclient=mqtt.Client()
-local_mqttclient.connect(LOCAL_MQTT_HOST, LOCAL_MQTT_PORT, 30)
-local_mqttclient.loop_start()
+local_mqttclient=mqtt.Client()                                                  
+local_mqttclient.on_connect = on_connect_local   
+local_mqttclient.connect(LOCAL_MQTT_HOST, LOCAL_MQTT_PORT, 60)                  
+local_mqttclient.on_message = on_message  
 
-
-# Start capturing bode from usb webcam (Device 1)
-cap=cv2.VideoCapture(1)
-
-#i=0   #Initialize counter for face images
-
-while(True):
-
-    ret,frame=cap.read()  #Read Frame
-
-    gray=cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)  #Convert to Gray Scale
-    
-    face_cascade=cv2.CascadeClassifier('/OpenCV/haarcascades/haarcascade_frontalface_default.xml')   #Run Face classification
-
-    faces=face_cascade.detectMultiScale(gray,1.3,5)
-    if len(faces)>0: print(faces)
-    
-    
-    #For each face detected in frame, captureimage and publish to local MQTT broker
-
-    for (x,y,w,h) in faces:
-        
-        face=gray[y:y+h,x:x+w]   #Cut out the face
-        
-        #print("face = ",face)
-        #cv2.imwrite('/host/image'+str(i)+'.png',face) 
-
-        rc,png =cv2.imencode('.png',face)  #Encode as png
-
-        msg=png.tobytes()  #Prep to send as message
-
-        local_mqttclient.publish(LOCAL_MQTT_TOPIC,msg,1)  #Publish to local broker
-        #i=i+1
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
-
-local_mqttclient.loop_stop()
-
-local_mqttclient.disconnect()
-cap.release()
-cv2.destroyAllWindows()
+local_mqttclient.loop_forever()    
+remote_mqttclient.loop_stop()
