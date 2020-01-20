@@ -5,7 +5,7 @@ import paho.mqtt.client as mqtt
 #Set up MQTT parameters
 LOCAL_MQTT_HOST="hw3_broker"
 LOCAL_MQTT_PORT=1883
-LOCAL_MQTT_TOPIC="JDS/WEBCAMS"
+LOCAL_MQTT_TOPIC="JDS/WEBCAMS/#"
 
 #Path to store images
 OUTPUT_STR="/HW3Images/image"
