@@ -1,8 +1,8 @@
 FROM alpine
 
-RUN apk update && apk add --no-cache python3 mosquitto-clients
+RUN apk update && apk add --no-cache python mosquitto-clients
 
-RUN pip3 install --upgrade pip && pip3 install paho-mqtt
+RUN pip3 install --upgrade pip && pip install paho-mqtt && pip install numpy
 
 ENV PATH /usr/sbin:$PATH
 

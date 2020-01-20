@@ -17,7 +17,14 @@ All components are implemented as containerized applications deployed on the edg
 
 
 ### Docker
+Build Images for the Cloud:
+Broker: `docker build -t hw3_broker -f Dockerfile.broker .`
+Image Processor: `docker build -t hw3_processor -f Dockerfile.processor .`
 
+Build Images for the Jetson
+Broker: `docker build -t hw3_broker -f Dockerfile.broker .`
+Forwarder: `docker build -t hw3_forwarder -f Dockerfile.forwarder .`
+Edge Image Detector: 
 
 ## MQTT messgaing with Mosquitto
 
@@ -26,6 +33,12 @@ All components are implemented as containerized applications deployed on the edg
 ### Python Scripts
 
 ## Execution Instructions
+
+docker run --name hw3_broker --privileged -tid --rm -p 1883:1883 --network hw03_jds hw3_broker
+
+docker run --name hw3_processor -v /HW3Images:/HW3Images -v /home/Projects/w251-hw3:/host --privileged -ti --rm --network hw03_jds hw3_processor python /host/imageprocess.py
+
+
 
 
 ## Sample Images
